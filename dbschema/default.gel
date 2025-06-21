@@ -5,5 +5,12 @@ type User {
   property address -> str;
   property city -> str;
 }
+type Asset {
+  required property name -> str;
+  required property serial_number -> str;
+  required property type -> str;
+  optional property location -> str;
+  optional property user -> str;
+}
 
 }
