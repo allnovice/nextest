@@ -1,0 +1,8 @@
+module default {
+  type User {
+    required property username -> str;
+    required property email -> str;
+    property address -> str;
+    property city -> str;
+  }
+}
