@@ -1,29 +1,16 @@
 ﻿import { NextResponse } from 'next/server';
-import client from "@/lib/edgedb"; 
+import client from "@/lib/edgedb";
 
 export async function GET(req) {
+  const region = req.headers.get("x-vercel-ip-country") || "unknown";
+  console.log("🌍 Visitor region:", region);
+
   const { searchParams } = new URL(req.url);
-  const search = searchParams.get("q")?.trim();
+  const raw = searchParams.get("q")?.trim();
+  const search = raw === "" ? null : raw;
 
-  let query;
-  let vars = {};
-
-  if (search) {
-    const keywords = search.split(/\s+/);
-    let filters = [];
-
-    keywords.forEach((word, i) => {
-      const param = `kw${i}`;
-      vars[param] = `%${word}%`;
-
-      filters.push(`
-        .name ilike <str>$${param} or
-        .type ilike <str>$${param} or
-        .user ilike <str>$${param}
-      `);
-    });
-
-    query = `
+  const query = search
+    ? `
       select Asset {
         name,
         serial_number,
@@ -31,10 +18,14 @@ export async function GET(req) {
         location,
         user
       }
-      filter ${filters.map(f => `(${f})`).join(' and ')}
-    `;
-  } else {
-    query = `
+      filter
+        .name ilike <str>$search or
+        .type ilike <str>$search or
+        .user ilike <str>$search or
+        .serial_number ilike <str>$search or
+        .location ilike <str>$search
+    `
+    : `
       select Asset {
         name,
         serial_number,
@@ -43,16 +34,19 @@ export async function GET(req) {
         user
       }
     `;
-  }
 
   try {
-    const results = await client.query(query, vars);
+    const results = search
+      ? await client.query(query, { search: `%${search}%` })
+      : await client.query(query);
+
     return NextResponse.json({ assets: results });
   } catch (err) {
-    console.error("❌ EdgeDB Search Error:", err.message);
+    console.error("❌ EdgeDB Query Error:", err.message);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }
+
 
 export async function POST(req) {
   const body = await req.json();

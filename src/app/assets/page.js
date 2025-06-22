@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AssetPage() {
   const [searchA, setSearchA] = useState("");
@@ -10,14 +10,19 @@ export default function AssetPage() {
   const [filterText, setFilterText] = useState('');
   const [liveFilter, setLiveFilter] = useState("");
 
+  useEffect(() => {
+  fetchAssets(""); // Fetch all on first load
+}, []);
+
 
 const filteredResults = results.filter(asset =>
   asset.name.toLowerCase().includes(filterText.toLowerCase()) ||
-  asset.type.toLowerCase().includes(filterText.toLowerCase()) ||
-  (asset.user ?? '').toLowerCase().includes(filterText.toLowerCase()) ||
   asset.serial_number.toLowerCase().includes(filterText.toLowerCase()) ||
-  (asset.location ?? '').toLowerCase().includes(filterText.toLowerCase())
+  asset.type.toLowerCase().includes(filterText.toLowerCase()) ||
+  asset.location.toLowerCase().includes(filterText.toLowerCase()) ||
+  (asset.user ?? '').toLowerCase().includes(filterText.toLowerCase())
 );
+
 
 
   const fetchAssets = async (query) => {
